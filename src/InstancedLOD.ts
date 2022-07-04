@@ -11,7 +11,7 @@ export class InstancedLOD {
     public maxCount: number;
     public bvh: MeshBVH;
 
-    constructor(model: Object3D, transforms: Transforms) {
+    constructor(meshs: Mesh[], transforms: Transforms) {
 
     }
 
