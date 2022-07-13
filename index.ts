@@ -50,8 +50,10 @@ document.getElementById('toggle')?.addEventListener('click', () => {
 
 window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = camera1.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    camera1.updateProjectionMatrix();
+    cameraHelper.update();
 });
 
 
