@@ -3,6 +3,9 @@ import { MapControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { InstancedLOD } from './src/InstancedLOD';
 
+const count = 1000000;
+const planeSize = 1000;
+
 const scene = new Scene();
 
 const renderer = new WebGLRenderer({ antialias: true });
@@ -35,7 +38,7 @@ scene.add(dirLight);
 
 
 const controls = new MapControls(camera, renderer.domElement);
-const planeGeom = new PlaneBufferGeometry(1000, 1000, 1, 1);
+const planeGeom = new PlaneBufferGeometry(planeSize, planeSize, 1, 1);
 planeGeom.rotateX(-Math.PI / 2);
 const planeMtl = new MeshPhongMaterial({ color: 0x0c180a });
 const plane = new Mesh(planeGeom, planeMtl);
@@ -57,32 +60,27 @@ window.addEventListener('resize', () => {
 });
 
 
-const s = 1500;
-const positions = new Float32Array(s * s);
-const rotations = new Float32Array(s * s);
-const scales = new Float32Array(s * s);
-let n = 0;
-for (let i = 0; i < s; i++) {
-    for (let j = 0; j < s; j++) {
-        const x = Math.random() * 1000 - 500;
-        const z = Math.random() * 1000 - 500;
-        positions[n + 0] = x;
-        positions[n + 1] = 0;
-        positions[n + 2] = z;
+const positions = new Float32Array(count * 3);
+const rotations = new Float32Array(count * 3);
+const scales = new Float32Array(count * 3);
 
-        const rotate = Math.random() * Math.PI;
+for (let i = 0; i < count; i++) {
+    const x = Math.random() * planeSize - planeSize / 2;
+    const z = Math.random() * planeSize - planeSize / 2;
+    positions[i * 3 + 0] = x;
+    positions[i * 3 + 1] = 0;
+    positions[i * 3 + 2] = z;
 
-        rotations[n + 0] = 0;
-        rotations[n + 1] = rotate;
-        rotations[n + 2] = 0;
+    const rotate = Math.random() * Math.PI;
 
-        const scale = Math.random() + 0.5;
-        scales[n + 0] = scale;
-        scales[n + 1] = scale;
-        scales[n + 2] = scale;
+    rotations[i * 3 + 0] = 0;
+    rotations[i * 3 + 1] = rotate;
+    rotations[i * 3 + 2] = 0;
 
-        n += 3;
-    }
+    const scale = Math.random() + 0.5;
+    scales[i * 3 + 0] = scale;
+    scales[i * 3 + 1] = scale;
+    scales[i * 3 + 2] = scale;
 }
 
 let instancedLOD: InstancedLOD;
