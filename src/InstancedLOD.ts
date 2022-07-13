@@ -1,11 +1,5 @@
-import { BufferAttribute, BufferGeometry, Camera, DynamicDrawUsage, Frustum, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, Object3D, Sphere, Vector3 } from 'three';
-import { CONTAINED, INTERSECTED, MeshBVH, MeshBVHVisualizer, NOT_INTERSECTED } from 'three-mesh-bvh';
-
-interface Transforms {
-    positions: ArrayLike<number>;
-    rotations: ArrayLike<number>;
-    scales: ArrayLike<number>;
-}
+import { BufferAttribute, BufferGeometry, Camera, DynamicDrawUsage, Frustum, InstancedMesh, Mesh, Object3D, Sphere, Vector3 } from 'three';
+import { INTERSECTED, MeshBVH, NOT_INTERSECTED } from 'three-mesh-bvh';
 
 interface InstancedLODOptions {
     meshs: Mesh[];
@@ -18,30 +12,31 @@ interface InstancedLODOptions {
 }
 
 export class InstancedLOD extends Object3D {
-
-    // public meshs: Mesh[] = [];
+    // 所有点的位置
     public positions: ArrayLike<number>;
+    // 所有点的旋转
     public rotations: ArrayLike<number>;
+    // 所有点的缩放
     public scales: ArrayLike<number>;
+    // 视野最大可见距离，以外将不可见
     public maxDistance: number;
+    // 最小距离，以内将全部可见
     public minDistance: number;
+    // 实例化网格最大数量
     public maxCount: number;
 
-
+    // 用于 bvh 的
     public bvhGeometry: BufferGeometry;
-
-    public bvhHelper: MeshBVHVisualizer;
-    public bvhMesh: Mesh;
-
+    // 相机位置
     private cameraPos = new Vector3();
-
+    // 基于 maxDistance 的球体
     private sphere = new Sphere();
+    // 用来逐个更新网格时临时保存变换信息
     private dummy = new Object3D();
-
+    // 生成的实例化网格，为多个
     public meshs: InstancedMesh[];
+    // LOD 信息
     public levels = new Map<number, Set<number>>();
-    public indices: Array<number> = [];
-
 
     constructor(options: InstancedLODOptions) {
         super();
@@ -59,7 +54,7 @@ export class InstancedLOD extends Object3D {
         const l = this.bvhGeometry.attributes.position.count;
         for (let i = 0; i < l; i++) {
             _indices.push(i, i, i);
-            this.indices.push(i);
+            // this.indices.push(i);
         }
         this.bvhGeometry.setIndex(_indices);
         const bvh = new MeshBVH(this.bvhGeometry);
@@ -71,17 +66,23 @@ export class InstancedLOD extends Object3D {
             instancedMesh.instanceMatrix.setUsage(DynamicDrawUsage);
             this.add(instancedMesh);
             return instancedMesh;
-        })
+        });
 
 
         this.generateLOD();
     }
 
+    /**
+     * 根据 bvh 最大层级数，生成对应层数的标记点
+     * @returns void
+     */
     public generateLOD() {
-        const { levels, indices, bvhGeometry } = this;
+        const { levels, bvhGeometry } = this;
         const { boundsTree } = bvhGeometry;
 
-        if (!boundsTree) return;
+        const indexAttr = bvhGeometry.index;
+
+        if (!boundsTree || !indexAttr) return;
 
         // 获取最大深度
         let maxDepth = 0;
@@ -100,19 +101,26 @@ export class InstancedLOD extends Object3D {
             const set: Set<number> = new Set();
             const step = Math.pow(2, maxDepth - i);
 
-            for (let j = 0, l = indices.length; j < l; j += step) {
-                set.add(indices[j]);
+            for (let j = 0, l = indexAttr.count; j < l; j += step) {
+                set.add(indexAttr.getX(j * 3));
             }
 
             levels.set(i, set);
         }
     }
 
+    /**
+     * 
+     * @param camera 相机
+     * @param frustum 视锥，可适当扩展视锥范围以避免近处物体消失
+     * @returns void
+     */
     public update(camera: Camera, frustum: Frustum) {
+
         const { boundsTree } = this.bvhGeometry;
         if (!boundsTree) return;
 
-        const { cameraPos, sphere, dummy, meshs, positions, maxCount, maxDistance, minDistance, levels } = this;
+        const { cameraPos, sphere, dummy, meshs, maxCount, maxDistance, minDistance, levels } = this;
 
         camera.getWorldPosition(cameraPos);
         sphere.center.copy(cameraPos);
@@ -124,11 +132,11 @@ export class InstancedLOD extends Object3D {
 
         if (!indexAttr) return;
 
+        const maxLevel = levels.size - 1;
 
         boundsTree.shapecast({
             intersectsBounds(box, isLeaf, score, depth, nodeIndex) {
-                // sphere.radius = 
-                const intersects = frustum.intersectsBox(box) && sphere.intersectsBox(box);
+                const intersects = (frustum.intersectsBox(box) && sphere.intersectsBox(box));
                 return intersects ? INTERSECTED : NOT_INTERSECTED;
             },
             intersectsTriangle(triangle, triangleIndex, contained, depth) {
@@ -139,14 +147,12 @@ export class InstancedLOD extends Object3D {
 
                     if (d > maxDistance) return false;
 
-                    const maxLevel = levels.size - 1;
-
                     let l = Math.round((d - minDistance) / (maxDistance - minDistance) * maxLevel);
-                    
+
                     if (l < 0) l = 0;
                     if (l > maxLevel) l = maxLevel;
                     l = maxLevel - l;
-                    
+
                     const set = levels.get(l);
 
                     if (!set) return false;
@@ -162,9 +168,9 @@ export class InstancedLOD extends Object3D {
             },
         });
 
-        // console.log(maxDep)
         meshs.forEach(m => m.count = indices.size);
-        // console.log(instancedMesh.count, indices.size);
+
+        const { positions, rotations, scales } = this;
 
         let i = 0;
         for (let index of indices) {
@@ -174,12 +180,21 @@ export class InstancedLOD extends Object3D {
 
             dummy.position.copy(tempVec);
 
+            tempVec.x = scales[index * 3 + 0];
+            tempVec.y = scales[index * 3 + 1];
+            tempVec.z = scales[index * 3 + 2];
+
+            dummy.scale.copy(tempVec);
+
+            dummy.rotation.x = rotations[index * 3 + 0];
+            dummy.rotation.y = rotations[index * 3 + 1];
+            dummy.rotation.z = rotations[index * 3 + 2];
+
             dummy.updateMatrix();
             meshs.forEach(m => m.setMatrixAt(i, dummy.matrix));
 
             i++;
         }
-
 
         meshs.forEach(m => m.instanceMatrix.needsUpdate = true);
     }
