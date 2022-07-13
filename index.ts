@@ -51,15 +51,15 @@ scene.add(dirLight);
 
 
 const controls = new MapControls(camera, renderer.domElement);
-const planeGeom = new PlaneBufferGeometry(1000, 1000, 1000, 1000);
+const planeGeom = new PlaneBufferGeometry(100, 100, 1, 1);
 planeGeom.rotateX(-Math.PI / 2);
-const planeMtl = new MeshPhongMaterial({ color: 0x222222 });
+const planeMtl = new MeshPhongMaterial({ color: 0x0c180a });
 const plane = new Mesh(planeGeom, planeMtl);
 plane.receiveShadow = true;
 scene.add(plane);
 
 
-const cubeGeom = new BoxBufferGeometry(0.2, 1, 0.2);
+const cubeGeom = new BoxBufferGeometry(0.5, 1, 0.5);
 cubeGeom.translate(0, 0.5, 0);
 const cube = new Mesh(cubeGeom, new MeshLambertMaterial({ color: 0xffffff }));
 cube.castShadow = true;
@@ -69,7 +69,7 @@ let currentCamera = camera;
 document.getElementById('toggle')?.addEventListener('click', () => {
     currentCamera = currentCamera === camera ? camera1 : camera;
     controls.object = currentCamera;
-})
+});
 
 window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -77,30 +77,55 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
-// const loader = new GLTFLoader();
-// loader.load("./assets/Flower.glb", gltf => {
-//     console.log(gltf, gltf.scene)
-//     gltf.scene.children.forEach((item) => {
-//         item.castShadow = true;
-//         item.receiveShadow = true;
-//         // meshs.push(item as Mesh);
-//     })
-//     gltf.scene.scale.set(3, 3, 3);
-//     scene.add(gltf.scene);
-// });
+// const positions = planeGeom.getAttribute('position').array;
+const s = 300;
+const positions = new Float32Array(s * s);
+let n = 0;
+for (let i = 0; i < s; i++) {
+    for (let j = 0; j < s; j++) {
+        const x = Math.random() * 100 - 50;
+        const z = Math.random() * 100 - 50;
+        positions[n + 0] = x;
+        positions[n + 1] = 0;
+        positions[n + 2] = z;
+        n += 3;
+    }
+}
 
-const positions = planeGeom.getAttribute('position').array;
+let instancedLOD: InstancedLOD;
+new GLTFLoader().load('./assets/Grass.glb', grass => {
 
+    const meshs: Mesh[] = [];
+    grass.scene.children[0].children.forEach(item => {
+        const mesh = item as Mesh;
 
-let meshs: Mesh[] = [];
-const instancedLOD = new InstancedLOD({
-    meshs: [cube],
-    positions,
-    maxDistance: 500,
-    maxCount: 1000
+        mesh.geometry.rotateX(-Math.PI / 2);
+        mesh.geometry.translate(0, -0.1, 0);
+        meshs.push(mesh.clone());
+    });
+
+    new GLTFLoader().load("./assets/Flower.glb", flower => {
+        flower.scene.children.forEach((item) => {
+
+            const mesh = item as Mesh;
+
+            mesh.geometry.rotateX(Math.PI / 2);
+            mesh.geometry.scale(2, 5, 2);
+            meshs.push(mesh.clone());
+        });
+
+        instancedLOD = new InstancedLOD({
+            meshs,
+            positions,
+            maxDistance: 100,
+            minDistance: 15,
+            maxCount: 10000
+        });
+        scene.add(instancedLOD);
+        console.log(meshs);
+    });
 });
-// instancedLOD.bvhHelper.position.y = 0.1;
-scene.add(instancedLOD);
+
 
 console.log(scene);
 
@@ -113,7 +138,7 @@ function animate() {
     controls.update();
     renderer.render(scene, currentCamera);
 
-    if (frame % 2 == 0) {
+    if (instancedLOD) {
         cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
         frustum.setFromProjectionMatrix(cameraMatrix);
         instancedLOD.update(camera, frustum);
