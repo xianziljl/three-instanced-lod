@@ -1,0 +1,13 @@
+assets
+node_modules
+src
+temp
+
+.vscode
+.gitignore
+.npmignore
+index.html
+main.ts
+rollup.config.js
+tsconfig.json
+yarn.lock

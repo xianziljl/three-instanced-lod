@@ -12,7 +12,7 @@
       "downlevelIteration": true,
       "removeComments": true,
       "isolatedModules": false,
-      "noEmit": false
+      "noEmit": false,
     },
     "exclude": [
       "node_modules"

@@ -26,17 +26,18 @@ export class InstancedLOD extends Object3D {
     public maxCount: number;
 
     // 用于 bvh 的
-    public bvhGeometry: BufferGeometry;
+    private bvhGeometry: BufferGeometry;
     // 相机位置
     private cameraPos = new Vector3();
     // 基于 maxDistance 的球体
     private sphere = new Sphere();
     // 用来逐个更新网格时临时保存变换信息
     private dummy = new Object3D();
+    // LOD 信息
+    private levels = new Map<number, Set<number>>();
+
     // 生成的实例化网格，为多个
     public meshs: InstancedMesh[];
-    // LOD 信息
-    public levels = new Map<number, Set<number>>();
 
     constructor(options: InstancedLODOptions) {
         super();
@@ -76,7 +77,7 @@ export class InstancedLOD extends Object3D {
      * 根据 bvh 最大层级数，生成对应层数的标记点
      * @returns void
      */
-    public generateLOD() {
+    private generateLOD() {
         const { levels, bvhGeometry } = this;
         const { boundsTree } = bvhGeometry;
 
