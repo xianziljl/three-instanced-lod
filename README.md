@@ -2,7 +2,7 @@
 
 用于在 three.js 大量重复物体，根据摄像机视锥范围渲染局部渲染，使用了 [instanced mesh](https://threejs.org/examples/?q=instanc#webgl_instancing_performance) 和 [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh)。
 
-[Demo1](https://github.com/xianziljl/three-instanced-lod)
+[Demo](https://xianziljl.github.io/three-instanced-lod/)
 
 
 ## 安装
