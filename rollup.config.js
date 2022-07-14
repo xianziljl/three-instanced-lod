@@ -35,10 +35,10 @@ const config = isProd ? {
     
 } : {
 
-    input: 'main.ts',
+    input: 'src/index.ts',
     format: 'esm',
     output: {
-        dir: 'temp',
+        dir: 'dist',
         format: 'esm'
     },
     plugins: [

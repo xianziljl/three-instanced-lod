@@ -15,7 +15,7 @@
     "email": "xianziycg@gmail.com",
     "url": "https://github.com/xianziljl"
   },
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "three": "^0.142.0",
     "three-mesh-bvh": "^0.5.14"
