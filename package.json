@@ -1,7 +1,7 @@
 {
   "name": "three-instanced-lod",
   "version": "1.0.0",
-  "description": "",
+  "description": "用于在 three.js 大量重复物体，根据摄像机视锥范围局部渲染",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "typings": "dist/typings.d.ts",
