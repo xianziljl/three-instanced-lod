@@ -30,13 +30,30 @@
     </div>
 
     <script type="module">
-        import { AmbientLight, AxesHelper, CameraHelper, DirectionalLight, DirectionalLightHelper, Frustum, Matrix4, Mesh, MeshPhongMaterial, PerspectiveCamera, PlaneBufferGeometry, Scene, sRGBEncoding, WebGLRenderer } from 'three';
+        import {
+            AmbientLight,
+            AxesHelper,
+            CameraHelper,
+            DirectionalLight,
+            DirectionalLightHelper,
+            Frustum,
+            Matrix4,
+            Mesh,
+            MeshPhongMaterial,
+            PerspectiveCamera,
+            PlaneBufferGeometry,
+            Scene,
+            sRGBEncoding,
+            WebGLRenderer,
+            BoxGeometry,
+            Object3D
+        } from 'three';
         import { MapControls } from 'three/examples/jsm/controls/OrbitControls';
         import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-        import { InstancedLOD } from './dist/index.js';
+        import { InstancedLOD, flatMeshs } from './dist/index.js';
 
-        const count = 1000000;
-        const planeSize = 1000;
+        const count = 100_000;
+        const planeSize = 10_00;
 
         const scene = new Scene();
 
@@ -46,7 +63,7 @@
         document.body.appendChild(renderer.domElement);
 
         const camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
-        camera.position.set(0, 10, 0);
+        camera.position.set(0, 15, 0);
         camera.lookAt(0, 0, 0);
         const cameraHelper = new CameraHelper(camera);
         scene.add(cameraHelper);
@@ -58,9 +75,9 @@
         scene.add(helper);
 
 
-        const light = new AmbientLight(0xffffff, 0.3);
+        const light = new AmbientLight(0xffffff, 1);
         scene.add(light);
-        const dirLight = new DirectionalLight(0xffffff, 0.7);
+        const dirLight = new DirectionalLight(0xffffff, 1);
         const lightHelper = new DirectionalLightHelper(dirLight);
         dirLight.rotateX(-Math.PI / 4);
         dirLight.position.set(70, 100, 50);
@@ -72,7 +89,7 @@
         const controls = new MapControls(camera, renderer.domElement);
         const planeGeom = new PlaneBufferGeometry(planeSize, planeSize, 1, 1);
         planeGeom.rotateX(-Math.PI / 2);
-        const planeMtl = new MeshPhongMaterial({ color: 0x0c180a });
+        const planeMtl = new MeshPhongMaterial({ color: 0x111111 });
         const plane = new Mesh(planeGeom, planeMtl);
         scene.add(plane);
 
@@ -116,49 +133,28 @@
         }
 
         let instancedLOD;
-        new GLTFLoader().load('./assets/Grass.glb', grass => {
 
-            const meshs = [];
-            grass.scene.children[0].children.forEach(item => {
-                const mesh = item;
+        new GLTFLoader().load('./assets/fru_tree/scene.gltf', gltf => {
+            const meshs = flatMeshs(gltf.scene);
+            const options = {
+                meshs,
+                positions,
+                rotations,
+                scales,
+                maxDistance: 500,
+                minDistance: 100,
+                maxCount: 10000
+            };
 
-                mesh.geometry.rotateX(-Math.PI / 2);
-                mesh.geometry.translate(0, -0.1, 0);
-                meshs.push(mesh.clone());
-            });
-
-            new GLTFLoader().load("./assets/Flower.glb", flower => {
-                flower.scene.children.forEach((item) => {
-
-                    const mesh = item;
-
-                    mesh.geometry.rotateX(Math.PI / 2);
-
-                    meshs.push(mesh.clone());
-                });
-
-                const options = {
-                    meshs,
-                    positions,
-                    rotations,
-                    scales,
-                    maxDistance: 100,
-                    minDistance: 15,
-                    maxCount: 10000
-                };
-                console.log(options);
-
-                instancedLOD = new InstancedLOD(options);
-                scene.add(instancedLOD);
-            });
+            instancedLOD = new InstancedLOD(options);
+            scene.add(instancedLOD);
         });
 
 
-        console.log(scene);
+        // console.log(scene);
 
         const frustum = new Frustum();
         const cameraMatrix = new Matrix4();
-
 
 
         let frame = 0;
@@ -171,7 +167,7 @@
                 cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
                 frustum.setFromProjectionMatrix(cameraMatrix);
                 frustum.planes.forEach(plane => {
-                    plane.constant += 2;
+                    plane.constant += 10;
                 });
                 instancedLOD.update(camera, frustum);
             }

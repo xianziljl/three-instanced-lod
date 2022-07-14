@@ -55,7 +55,6 @@ export class InstancedLOD extends Object3D {
         const l = this.bvhGeometry.attributes.position.count;
         for (let i = 0; i < l; i++) {
             _indices.push(i, i, i);
-            // this.indices.push(i);
         }
         this.bvhGeometry.setIndex(_indices);
         const bvh = new MeshBVH(this.bvhGeometry);
@@ -68,7 +67,6 @@ export class InstancedLOD extends Object3D {
             this.add(instancedMesh);
             return instancedMesh;
         });
-
 
         this.generateLOD();
     }
