@@ -16,6 +16,7 @@ npm install three-instanced-lod
 ```
 
 ## 使用
+
 ```javascript
 import { InstancedLOD, flatMeshs } from 'three-instanced-lod';
 
@@ -44,7 +45,15 @@ const instancedLOD = new InstancedLOD({
     // 则有可能导致视野范围内物体无法全部渲染
     maxCount: 10000
 
-})
+});
+
+// 动画循环
+function animate() {
+    // ...渲染场景
+
+    // 相机和视锥，可适当扩大视锥，以避免近处物体消失
+    instancedLOD.update(camera, frustum);
+}
 ```
 
 ## License
