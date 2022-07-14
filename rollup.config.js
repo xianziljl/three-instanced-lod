@@ -24,11 +24,10 @@ const config = isProd ? {
         dtsBundle({
             bundle: {
                 name: 'three-instanced-lod',
-                main: 'dist/src/index.d.ts',
-                out: '../typings.d.ts',
+                main: 'dist/index.d.ts',
+                out: './index.d.ts',
                 removeSource: true,
-            },
-            deleteOnComplete: ['dist/main.d.ts', 'dist/src']
+            }
         })
     ],
     external: id => /^three/.test(id),
